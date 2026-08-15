@@ -206,6 +206,45 @@ def cmd_live(args: argparse.Namespace, config: dict) -> None:
         time.sleep(sleep_for)
 
 
+def cmd_today(args: argparse.Namespace, config: dict) -> None:
+    storage = Storage(config["database"]["path"])
+
+    local_tz = datetime.now().astimezone().tzinfo
+    start_of_day_local = datetime.now(local_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    start_of_day_utc_iso = start_of_day_local.astimezone(timezone.utc).isoformat()
+
+    rows = storage.fetch_signals(since=start_of_day_utc_iso)
+    if not rows:
+        print("No candidates evaluated yet today.")
+        return
+
+    # Keep each ticker's single best-scoring evaluation from today, since it may have been
+    # polled many times.
+    best_by_ticker: dict[str, dict] = {}
+    for row in rows:
+        row = dict(row)
+        existing = best_by_ticker.get(row["ticker"])
+        if existing is None or row["total_score"] > existing["total_score"]:
+            best_by_ticker[row["ticker"]] = row
+
+    ranked = sorted(best_by_ticker.values(), key=lambda r: r["total_score"], reverse=True)
+    alerted_count = sum(1 for r in ranked if r["crossed_threshold"])
+
+    print(
+        f"\nToday's hype-train leaderboard ({len(ranked)} tickers evaluated, "
+        f"{alerted_count} crossed the alert threshold)\n"
+    )
+    print(f"{'TICKER':<8}{'SCORE':>7}  {'SOCIAL':>7}{'PV':>7}{'OPT':>7}{'NEWS':>7}  ALERTED")
+    for r in ranked[: args.limit]:
+        options_display = r["options_score"] if r["options_available"] else 0.0
+        print(
+            f"{r['ticker']:<8}{r['total_score']:>7.1f}  {r['social_score']:>7.1f}"
+            f"{r['price_volume_score']:>7.1f}{options_display:>7.1f}{r['news_score']:>7.1f}  "
+            f"{'YES' if r['crossed_threshold'] else 'no'}"
+        )
+    print()
+
+
 def cmd_backtest(args: argparse.Namespace, config: dict) -> None:
     from backtest import run_backtest
 
@@ -228,6 +267,10 @@ def main() -> None:
         "--once", action="store_true", help="run a single poll cycle and exit (useful for cron)"
     )
     live_parser.set_defaults(func=cmd_live)
+
+    today_parser = sub.add_parser("today", help="show today's hype-score leaderboard from the local database")
+    today_parser.add_argument("--limit", type=int, default=15, help="max tickers to show")
+    today_parser.set_defaults(func=cmd_today)
 
     backtest_parser = sub.add_parser("backtest", help="evaluate logged signals against forward returns")
     backtest_parser.add_argument(
