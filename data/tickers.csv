@@ -1,0 +1,354 @@
+ticker,name
+AAPL,Apple Inc
+MSFT,Microsoft Corp
+GOOGL,Alphabet Inc Class A
+GOOG,Alphabet Inc Class C
+AMZN,Amazon.com Inc
+NVDA,NVIDIA Corp
+META,Meta Platforms Inc
+TSLA,Tesla Inc
+BRK.B,Berkshire Hathaway Class B
+AVGO,Broadcom Inc
+LLY,Eli Lilly
+JPM,JPMorgan Chase
+V,Visa Inc
+UNH,UnitedHealth Group
+XOM,Exxon Mobil
+MA,Mastercard Inc
+PG,Procter & Gamble
+COST,Costco Wholesale
+HD,Home Depot
+MRK,Merck & Co
+ABBV,AbbVie Inc
+CVX,Chevron Corp
+KO,Coca-Cola Co
+PEP,PepsiCo Inc
+ADBE,Adobe Inc
+WMT,Walmart Inc
+BAC,Bank of America
+CRM,Salesforce Inc
+TMO,Thermo Fisher Scientific
+NFLX,Netflix Inc
+MCD,McDonald's Corp
+CSCO,Cisco Systems
+ACN,Accenture PLC
+ABT,Abbott Laboratories
+LIN,Linde PLC
+DHR,Danaher Corp
+AMD,Advanced Micro Devices
+WFC,Wells Fargo
+DIS,Walt Disney Co
+TXN,Texas Instruments
+PM,Philip Morris International
+INTC,Intel Corp
+VZ,Verizon Communications
+CMCSA,Comcast Corp
+INTU,Intuit Inc
+COP,ConocoPhillips
+AMGN,Amgen Inc
+IBM,International Business Machines
+NOW,ServiceNow Inc
+UNP,Union Pacific Corp
+GE,General Electric
+QCOM,Qualcomm Inc
+CAT,Caterpillar Inc
+SPGI,S&P Global
+BA,Boeing Co
+HON,Honeywell International
+LOW,Lowe's Companies
+RTX,RTX Corp
+ELV,Elevance Health
+PLD,Prologis Inc
+NKE,Nike Inc
+SBUX,Starbucks Corp
+UPS,United Parcel Service
+BKNG,Booking Holdings
+MDT,Medtronic PLC
+GS,Goldman Sachs Group
+BLK,BlackRock Inc
+ISRG,Intuitive Surgical
+DE,Deere & Co
+AXP,American Express
+LMT,Lockheed Martin
+ADI,Analog Devices
+SYK,Stryker Corp
+TJX,TJX Companies
+MDLZ,Mondelez International
+GILD,Gilead Sciences
+MMC,Marsh & McLennan
+VRTX,Vertex Pharmaceuticals
+ADP,Automatic Data Processing
+CB,Chubb Ltd
+C,Citigroup Inc
+SCHW,Charles Schwab Corp
+PGR,Progressive Corp
+MO,Altria Group
+ZTS,Zoetis Inc
+SO,Southern Co
+CI,Cigna Group
+BSX,Boston Scientific
+FI,Fiserv Inc
+MU,Micron Technology
+DUK,Duke Energy
+EQIX,Equinix Inc
+SLB,Schlumberger NV
+BMY,Bristol-Myers Squibb
+PANW,Palo Alto Networks
+AMT,American Tower
+NOC,Northrop Grumman
+CME,CME Group
+ITW,Illinois Tool Works
+EOG,EOG Resources
+TGT,Target Corp
+SHW,Sherwin-Williams
+CSX,CSX Corp
+APD,Air Products and Chemicals
+CL,Colgate-Palmolive
+WM,Waste Management
+FCX,Freeport-McMoRan
+MCK,McKesson Corp
+HUM,Humana Inc
+GD,General Dynamics
+EMR,Emerson Electric
+NSC,Norfolk Southern
+MPC,Marathon Petroleum
+PSX,Phillips 66
+ORLY,O'Reilly Automotive
+AON,Aon PLC
+MAR,Marriott International
+ROP,Roper Technologies
+PXD,Pioneer Natural Resources
+APH,Amphenol Corp
+FDX,FedEx Corp
+TT,Trane Technologies
+PSA,Public Storage
+MSI,Motorola Solutions
+CMG,Chipotle Mexican Grill
+NXPI,NXP Semiconductors
+PH,Parker-Hannifin
+AJG,Arthur J Gallagher
+ADSK,Autodesk Inc
+CARR,Carrier Global
+KLAC,KLA Corp
+SRE,Sempra Energy
+MSCI,MSCI Inc
+NEM,Newmont Corp
+AZO,AutoZone Inc
+ANET,Arista Networks
+CDNS,Cadence Design Systems
+SNPS,Synopsys Inc
+MET,MetLife Inc
+DXCM,DexCom Inc
+ECL,Ecolab Inc
+CTAS,Cintas Corp
+TFC,Truist Financial
+AIG,American International Group
+WMB,Williams Companies
+COF,Capital One Financial
+TDG,TransDigm Group
+HES,Hess Corp
+JCI,Johnson Controls
+ROST,Ross Stores
+SPG,Simon Property Group
+O,Realty Income Corp
+IDXX,IDEXX Laboratories
+CPRT,Copart Inc
+PCAR,PACCAR Inc
+NUE,Nucor Corp
+KMB,Kimberly-Clark
+GM,General Motors
+F,Ford Motor Co
+DAL,Delta Air Lines
+UAL,United Airlines Holdings
+AAL,American Airlines Group
+LUV,Southwest Airlines
+CCL,Carnival Corp
+RCL,Royal Caribbean Cruises
+NCLH,Norwegian Cruise Line
+UBER,Uber Technologies
+LYFT,Lyft Inc
+ABNB,Airbnb Inc
+DASH,DoorDash Inc
+SNAP,Snap Inc
+PINS,Pinterest Inc
+SPOT,Spotify Technology
+SQ,Block Inc
+PYPL,PayPal Holdings
+SHOP,Shopify Inc
+ROKU,Roku Inc
+ZM,Zoom Video Communications
+DOCU,DocuSign Inc
+CRWD,CrowdStrike Holdings
+NET,Cloudflare Inc
+DDOG,Datadog Inc
+SNOW,Snowflake Inc
+PLTR,Palantir Technologies
+RBLX,Roblox Corp
+U,Unity Software Inc
+COIN,Coinbase Global
+HOOD,Robinhood Markets
+SOFI,SoFi Technologies
+AFRM,Affirm Holdings
+UPST,Upstart Holdings
+LCID,Lucid Group
+RIVN,Rivian Automotive
+NIO,NIO Inc
+XPEV,XPeng Inc
+LI,Li Auto Inc
+FSR,Fisker Inc
+GME,GameStop Corp
+AMC,AMC Entertainment Holdings
+BB,BlackBerry Ltd
+BBBY,Bed Bath & Beyond Inc
+NOK,Nokia Corp
+WISH,ContextLogic Inc
+CLOV,Clover Health Investments
+SPCE,Virgin Galactic Holdings
+DKNG,DraftKings Inc
+PENN,Penn Entertainment Inc
+MARA,Marathon Digital Holdings
+RIOT,Riot Platforms Inc
+MSTR,MicroStrategy Inc
+COIN,Coinbase Global
+BITF,Bitfarms Ltd
+HUT,Hut 8 Mining Corp
+CVNA,Carvana Co
+BYND,Beyond Meat Inc
+PLUG,Plug Power Inc
+FCEL,FuelCell Energy Inc
+NKLA,Nikola Corp
+CHPT,ChargePoint Holdings
+QS,QuantumScape Corp
+SPWR,SunPower Corp
+ENPH,Enphase Energy
+FSLR,First Solar Inc
+RUN,Sunrun Inc
+TLRY,Tilray Brands
+CGC,Canopy Growth Corp
+ACB,Aurora Cannabis Inc
+SNDL,SNDL Inc
+MVIS,MicroVision Inc
+IONQ,IonQ Inc
+SMCI,Super Micro Computer
+ARM,Arm Holdings PLC
+DELL,Dell Technologies
+HPQ,HP Inc
+IBM,International Business Machines
+ORCL,Oracle Corp
+SAP,SAP SE
+NOW,ServiceNow Inc
+WDAY,Workday Inc
+TEAM,Atlassian Corp
+ZS,Zscaler Inc
+OKTA,Okta Inc
+MDB,MongoDB Inc
+TWLO,Twilio Inc
+DBX,Dropbox Inc
+BOX,Box Inc
+ETSY,Etsy Inc
+EBAY,eBay Inc
+W,Wayfair Inc
+CHWY,Chewy Inc
+CVS,CVS Health Corp
+WBA,Walgreens Boots Alliance
+KR,Kroger Co
+DG,Dollar General Corp
+DLTR,Dollar Tree Inc
+BBY,Best Buy Co
+GPS,Gap Inc
+M,Macy's Inc
+JWN,Nordstrom Inc
+KSS,Kohl's Corp
+FL,Foot Locker Inc
+LULU,Lululemon Athletica
+DECK,Deckers Brands
+CROX,Crocs Inc
+UAA,Under Armour Inc
+YETI,YETI Holdings
+PTON,Peloton Interactive
+WOOF,Petco Health and Wellness
+CAKE,Cheesecake Factory
+DPZ,Domino's Pizza
+YUM,Yum Brands
+QSR,Restaurant Brands International
+WEN,Wendy's Co
+SBUX,Starbucks Corp
+XOM,Exxon Mobil
+CVX,Chevron Corp
+OXY,Occidental Petroleum
+DVN,Devon Energy
+FANG,Diamondback Energy
+HAL,Halliburton Co
+BKR,Baker Hughes Co
+KMI,Kinder Morgan Inc
+OKE,ONEOK Inc
+ET,Energy Transfer LP
+T,AT&T Inc
+TMUS,T-Mobile US Inc
+CHTR,Charter Communications
+LUMN,Lumen Technologies
+VOD,Vodafone Group PLC
+WBD,Warner Bros Discovery
+PARA,Paramount Global
+FOX,Fox Corp Class B
+FOXA,Fox Corp Class A
+NWSA,News Corp Class A
+LYV,Live Nation Entertainment
+EA,Electronic Arts
+TTWO,Take-Two Interactive
+ATVI,Activision Blizzard
+RBLX,Roblox Corp
+JNJ,Johnson & Johnson
+PFE,Pfizer Inc
+MRNA,Moderna Inc
+BNTX,BioNTech SE
+NVAX,Novavax Inc
+REGN,Regeneron Pharmaceuticals
+BIIB,Biogen Inc
+ILMN,Illumina Inc
+ALGN,Align Technology
+IQV,IQVIA Holdings
+ZBH,Zimmer Biomet Holdings
+EW,Edwards Lifesciences
+HCA,HCA Healthcare
+CNC,Centene Corp
+MOH,Molina Healthcare
+DXC,DXC Technology
+FIS,Fidelity National Information Services
+GPN,Global Payments Inc
+ADI,Analog Devices
+MRVL,Marvell Technology
+ON,ON Semiconductor
+SWKS,Skyworks Solutions
+QRVO,Qorvo Inc
+TER,Teradyne Inc
+LRCX,Lam Research Corp
+AMAT,Applied Materials
+ASML,ASML Holding NV
+TSM,Taiwan Semiconductor Manufacturing
+UMC,United Microelectronics Corp
+STM,STMicroelectronics NV
+WOLF,Wolfspeed Inc
+GFS,GlobalFoundries Inc
+XLNX,Xilinx Inc
+TXN,Texas Instruments
+MCHP,Microchip Technology
+FTNT,Fortinet Inc
+CYBR,CyberArk Software
+S,SentinelOne Inc
+RPD,Rapid7 Inc
+TENB,Tenable Holdings
+VRNS,Varonis Systems
+QLYS,Qualys Inc
+ESTC,Elastic NV
+PATH,UiPath Inc
+AI,C3.ai Inc
+BBAI,BigBear.ai Holdings
+SOUN,SoundHound AI Inc
+APP,AppLovin Corp
+TTD,Trade Desk Inc
+PUBM,PubMatic Inc
+MGNI,Magnite Inc
+CRTO,Criteo SA
+DV,DoubleVerify Holdings
+IAS,Integral Ad Science Holding

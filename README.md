@@ -1,0 +1,145 @@
+# hypetrain-scanner
+
+Detects "hype-train" stocks — sudden retail-attention spikes (StockTwits + Reddit) confirmed by
+price/volume, options, and news activity — logs every evaluated candidate to a local SQLite
+database, and emails an alert when a ticker's combined hype score crosses a configurable
+threshold. Includes a backtest mode to evaluate the scanner's own signals against what actually
+happened afterward.
+
+## This is not investment advice
+
+- **`paper_mode` is on by default** and nothing in this project ever places a trade. Alerts are
+  just a log entry + an email.
+- By the time a move is loud enough on Reddit/StockTwits to trip these signals, it is very often
+  **already priced in** — that's the whole phenomenon this tool is trying to detect, and it cuts
+  both ways: the "confirming" price/volume move may already be over. Treat every alert as a
+  research prompt, not a buy signal.
+- Run `backtest` mode extensively against your own logged signals before you ever consider
+  acting on an alert manually. Nothing here should inform real trading decisions without that
+  step, and even then, this is not financial advice from a licensed advisor.
+
+## Architecture
+
+```
+discovery/      candidate discovery: StockTwits trending + Reddit mention counts, merged into a
+                ranked list of tickers with a mentions_now/mentions_baseline ratio per source
+signals/        confirmation signals for the discovery shortlist only, never the whole market:
+                price/volume/volatility (yfinance), options (yfinance, pluggable), news (Finnhub, pluggable)
+scoring.py      combines the four signal types into one 0-100 score using config.yaml weights
+alerting.py     emails an alert (smtplib) when score crosses threshold, deduped by cooldown window
+storage.py      SQLite: every evaluated candidate (not just alerts), plus mention history + backtest results
+backtest.py     pulls forward returns for logged signals and reports hit rate / avg return by signal type
+main.py         CLI: `live` (polling loop) and `backtest`
+```
+
+## Setup
+
+```bash
+cd hypetrain-scanner
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Then fill in `.env`:
+
+**Reddit** (for r/wallstreetbets etc. mention scanning) — go to
+https://www.reddit.com/prefs/apps, click "create app", choose type **script**, set a redirect URI
+of `http://localhost:8080` (unused but required). Copy the client ID (under the app name) and
+secret into `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET`. Set `REDDIT_USER_AGENT` to something
+identifying, e.g. `hypetrain-scanner/0.1 by u/yourusername`.
+
+**Finnhub** (for the news signal) — register a free account at https://finnhub.io/register and
+copy the API key from your dashboard into `FINNHUB_API_KEY`. Free tier is rate-limited; the
+scanner caches calls per polling interval to stay within it, but if you add many candidates or
+shorten the polling interval you may need to upgrade.
+
+**SMTP** (for email alerts) — for Gmail, create an [App Password](https://myaccount.google.com/apppasswords)
+(requires 2FA enabled) and use that as `SMTP_PASSWORD`, not your login password. Any SMTP
+provider works; set `SMTP_HOST`/`SMTP_PORT` accordingly.
+
+StockTwits' trending endpoint needs no auth/key.
+
+If Reddit or Finnhub credentials are missing, the scanner logs a warning and runs with that
+source/signal disabled rather than failing — you can start with just StockTwits + price/volume
+if you want.
+
+## Configuration
+
+Everything tunable lives in `config.yaml`: subreddit list, excluded tickers, all scoring
+weights and per-signal thresholds, alert threshold, cooldown window, polling interval, database
+path. Comments in the file explain what each value controls. Secrets never go in this file.
+
+`discovery.excluded_tickers` is a short seed list of common false-positive "words" (ARE, ON, IT,
+etc.) that also happen to be valid ticker symbols — extend it as you notice more.
+
+`data/tickers.csv` is a bundled, curated list of known ticker symbols used for regex-based
+extraction (not NLP — a match must be an exact token against this list). It's a snapshot, not
+the full market, and will go stale; refresh it periodically from an authoritative source (e.g.
+[NASDAQ's symbol directory](https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs)) if you
+want broader coverage.
+
+## Running
+
+**Live mode** — runs the discovery → signals → scoring → storage → alert loop every
+`polling.interval_seconds`:
+
+```bash
+python main.py live
+```
+
+Run a single cycle and exit (useful for driving it from cron/systemd-timer instead of an
+in-process loop):
+
+```bash
+python main.py live --once
+```
+
+Structured logs go to stdout and to `data/hypetrain.log` (configurable under `logging:` in
+config.yaml).
+
+**Backtest mode** — pulls forward price data (1d/3d/7d) for every logged signal and reports hit
+rate, average return, and distribution, broken down by which signal type (social/price-volume/
+options/news) dominated that signal's score:
+
+```bash
+# only signals that crossed the alert threshold (default)
+python main.py backtest
+
+# every evaluated candidate, not just alerts
+python main.py backtest --all-signals
+
+# filter by time / cap how many signals to pull forward data for
+python main.py backtest --since 2026-07-01T00:00:00+00:00 --limit 200
+```
+
+Run this after every change to `scoring.weights` or the per-signal thresholds in config.yaml to
+see how the change would have performed against your logged history — that's the point of
+logging every candidate, not just alerts.
+
+## Known limitations
+
+- **yfinance is unofficial** and has no SLA; Yahoo can and does rate-limit or block aggressive
+  callers. The scanner only ever calls it for the current discovery shortlist (never the whole
+  market) and caches responses for `polling.interval_seconds`, but if you shorten the interval
+  or raise `candidate_limit` significantly you're more exposed to this.
+- **yfinance's options data is a free, delayed, thin snapshot** of end-of-day-ish volume/open
+  interest — it is not real-time options flow, and many tickers have sparse or stale chains.
+  The options sub-score is the lowest-confidence of the four for this reason. `signals/options.py`
+  defines an `OptionsProvider` interface with a `PaidOptionsFlowProvider` stub so you can swap in
+  a paid flow API (Unusual Whales, CBOE LiveVol, etc.) without touching scoring or main.py.
+- StockTwits' public trending endpoint is unofficial-ish, undocumented, and can change shape or
+  start requiring auth without notice.
+- Reddit's `new` listing per subreddit is sampled (bounded by `posts_per_subreddit`), not
+  exhaustive — very high-volume subreddits may undercount mentions within the lookback window.
+
+## Tests
+
+```bash
+pytest tests/
+```
+
+Covers `scoring.compute_hype_score` (weight normalization, threshold boundary, missing-options
+handling) and `discovery.tickers.extract_tickers` (the regex ticker-extraction, since a silent
+regression there would quietly break discovery without any errors).

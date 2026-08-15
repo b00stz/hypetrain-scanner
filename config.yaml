@@ -1,0 +1,94 @@
+# hypetrain-scanner configuration
+# Secrets (API keys, SMTP creds) live in .env — never put them here.
+
+paper_mode: true # When true (default): alerts are still logged + emailed, but nothing here ever
+                  # places a trade. Keep this true unless you fully understand the risks.
+
+database:
+  path: "data/hypetrain.db"
+
+polling:
+  interval_seconds: 300 # how often the main loop runs a full discovery+scoring cycle
+  candidate_limit: 25 # max number of merged candidates to run confirmation signals against per cycle
+
+discovery:
+  excluded_tickers: # common false-positive "words" that also look like tickers; extend freely
+    - "A"
+    - "I"
+    - "ALL"
+    - "ARE"
+    - "AT"
+    - "BE"
+    - "CAN"
+    - "DD"
+    - "FOR"
+    - "GO"
+    - "IT"
+    - "NEW"
+    - "ON"
+    - "ONE"
+    - "OR"
+    - "RE"
+    - "SO"
+    - "THE"
+    - "TO"
+    - "US"
+    - "YOLO"
+
+  stocktwits:
+    enabled: true
+    trending_url: "https://api.stocktwits.com/api/2/trending/symbols.json"
+    request_timeout_seconds: 10
+
+  reddit:
+    enabled: true
+    subreddits:
+      - "wallstreetbets"
+      - "stocks"
+      - "options"
+    posts_per_subreddit: 75 # how many "new" posts to scan per subreddit per cycle
+    mention_lookback_hours: 24 # window used to compute "mentions_now"
+
+  mentions:
+    baseline_lookback_days: 7 # rolling window (excluding the current poll) used for "mentions_baseline"
+    cold_start_baseline: 1.0 # baseline assumed when there's no history yet, avoids divide-by-zero spikes
+    ratio_full_score: 5.0 # mentions_now/mentions_baseline ratio that maps to a 100 social sub-score
+
+signals:
+  price_volume:
+    lookback_days: 20 # window for the average-volume baseline
+    volume_ratio_full_score: 5.0 # volume/avg_volume_20d ratio that maps to a 100 sub-score
+    price_change_pct_full_score: 8.0 # abs(% change) that maps to a 100 sub-score
+    intraday_volatility_full_score_pct: 6.0 # (day_high-day_low)/day_low % that maps to a 100 sub-score
+    weights: # how the three components combine into the single 0-100 price_volume signal
+      volume: 0.45
+      price_change: 0.35
+      intraday_volatility: 0.20
+
+  options:
+    # yfinance's option_chain() is a free, delayed, thin snapshot of open interest/volume — it is NOT
+    # real-time options flow. Treat this signal as low-confidence. See signals/options.py for the
+    # OptionsProvider interface if you want to swap in a paid flow API (e.g. Unusual Whales, CBOE LiveVol).
+    enabled: true
+    put_call_volume_ratio_bullish_full_score: 0.4 # put/call volume ratio <= this maps to a 100 sub-score
+    put_call_volume_ratio_bearish_zero_score: 1.5 # put/call volume ratio >= this maps to a 0 sub-score
+
+  news:
+    lookback_hours: 6 # "recent" window for headline count
+    baseline_lookback_days: 7 # trailing window used to compute the baseline daily headline rate
+    spike_ratio_full_score: 4.0 # recent-rate/baseline-rate ratio that maps to a 100 sub-score
+
+scoring:
+  weights: # must combine (after normalization) into the final 0-100 hype score
+    social: 0.35
+    price_volume: 0.30
+    options: 0.15
+    news: 0.20
+  alert_threshold: 70 # hype score at/above which an alert fires
+
+alerting:
+  cooldown_hours: 6 # don't re-alert the same ticker within this many hours
+
+logging:
+  level: "INFO"
+  file: "data/hypetrain.log"

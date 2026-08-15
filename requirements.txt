@@ -1,0 +1,7 @@
+requests>=2.31
+praw>=7.7
+yfinance>=0.2.40
+PyYAML>=6.0
+python-dotenv>=1.0
+pandas>=2.0
+tenacity>=8.2
