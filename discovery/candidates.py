@@ -1,4 +1,4 @@
-"""Merge StockTwits + Reddit mention sources into a single ranked candidate list.
+"""Merge StockTwits + Reddit (via ApeWisdom) mention sources into a single ranked candidate list.
 
 Each source's raw "count" is persisted to storage.mention_history on every poll, and compared
 against its own trailing rolling average to get a mentions_now/mentions_baseline ratio per
@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from discovery.reddit import RedditSource
+from discovery.apewisdom import ApeWisdomSource
 from discovery.stocktwits import StockTwitsSource
 from storage import Storage
 
@@ -41,7 +41,7 @@ def build_candidates(
     storage: Storage,
     known_tickers: set[str],
     stocktwits_source: Optional[StockTwitsSource],
-    reddit_source: Optional[RedditSource],
+    reddit_source: Optional[ApeWisdomSource],
     baseline_lookback_days: float,
     cold_start_baseline: float,
     limit: int,

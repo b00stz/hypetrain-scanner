@@ -21,7 +21,7 @@ happened afterward.
 ## Architecture
 
 ```
-discovery/      candidate discovery: StockTwits trending + Reddit mention counts, merged into a
+discovery/      candidate discovery: StockTwits trending + Reddit mention counts (via ApeWisdom), merged into a
                 ranked list of tickers with a mentions_now/mentions_baseline ratio per source
 signals/        confirmation signals for the discovery shortlist only, never the whole market:
                 price/volume/volatility (yfinance), options (yfinance, pluggable), news (Finnhub, pluggable)
@@ -44,12 +44,6 @@ cp .env.example .env
 
 Then fill in `.env`:
 
-**Reddit** (for r/wallstreetbets etc. mention scanning) — go to
-https://www.reddit.com/prefs/apps, click "create app", choose type **script**, set a redirect URI
-of `http://localhost:8080` (unused but required). Copy the client ID (under the app name) and
-secret into `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET`. Set `REDDIT_USER_AGENT` to something
-identifying, e.g. `hypetrain-scanner/0.1 by u/yourusername`.
-
 **Finnhub** (for the news signal) — register a free account at https://finnhub.io/register and
 copy the API key from your dashboard into `FINNHUB_API_KEY`. Free tier is rate-limited; the
 scanner caches calls per polling interval to stay within it, but if you add many candidates or
@@ -61,9 +55,15 @@ provider works; set `SMTP_HOST`/`SMTP_PORT` accordingly.
 
 StockTwits' trending endpoint needs no auth/key.
 
-If Reddit or Finnhub credentials are missing, the scanner logs a warning and runs with that
-source/signal disabled rather than failing — you can start with just StockTwits + price/volume
-if you want.
+Reddit mention data comes via [ApeWisdom](https://apewisdom.io/api), a free public API that
+aggregates mention counts across the same investing subreddits (r/wallstreetbets, r/stocks,
+r/options) -- no credentials needed. This sidesteps Reddit's own Data API, which now requires a
+separate "Responsible Builder Policy" access request that isn't guaranteed to be approved even
+for small personal/non-commercial tools. See `discovery/apewisdom.py` for details.
+
+If Finnhub credentials are missing, the scanner logs a warning and runs with the news signal
+disabled rather than failing — you can start with just StockTwits + Reddit + price/volume if you
+want.
 
 ## Configuration
 
@@ -131,8 +131,11 @@ logging every candidate, not just alerts.
   a paid flow API (Unusual Whales, CBOE LiveVol, etc.) without touching scoring or main.py.
 - StockTwits' public trending endpoint is unofficial-ish, undocumented, and can change shape or
   start requiring auth without notice.
-- Reddit's `new` listing per subreddit is sampled (bounded by `posts_per_subreddit`), not
-  exhaustive — very high-volume subreddits may undercount mentions within the lookback window.
+- **ApeWisdom is an independent third party, not an official Reddit product** — it's a free,
+  unauthenticated API with no SLA. It can change shape, rate-limit, or go offline without notice,
+  same caveat as StockTwits above. If it ever stops working, `discovery/apewisdom.py` is the only
+  file that needs to change; `discovery/candidates.py` just expects a `get_mention_counts()` call
+  returning `(counts, links)`, so any replacement source can drop in the same way.
 
 ## Tests
 

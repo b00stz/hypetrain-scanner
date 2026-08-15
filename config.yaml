@@ -41,13 +41,14 @@ discovery:
     request_timeout_seconds: 10
 
   reddit:
+    # Reddit mention counts come via ApeWisdom's free public API (apewisdom.io), not Reddit's
+    # own Data API -- no credentials needed. See discovery/apewisdom.py for why.
     enabled: true
-    subreddits:
+    subreddits: # ApeWisdom "filter" names -- must match their supported filter list
       - "wallstreetbets"
       - "stocks"
       - "options"
-    posts_per_subreddit: 75 # how many "new" posts to scan per subreddit per cycle
-    mention_lookback_hours: 24 # window used to compute "mentions_now"
+    request_timeout_seconds: 10
 
   mentions:
     baseline_lookback_days: 7 # rolling window (excluding the current poll) used for "mentions_baseline"

@@ -13,8 +13,8 @@ from datetime import datetime, timezone
 
 from alerting import AlertContext, AlertLinks, maybe_alert
 from configuration import load_config, setup_logging
+from discovery.apewisdom import ApeWisdomSource
 from discovery.candidates import Candidate, build_candidates
-from discovery.reddit import RedditSource
 from discovery.stocktwits import StockTwitsSource
 from discovery.tickers import DEFAULT_TICKERS_CSV, load_known_tickers
 from scoring import compute_hype_score
@@ -34,18 +34,13 @@ def build_stocktwits_source(config: dict) -> StockTwitsSource | None:
     return StockTwitsSource(cfg["trending_url"], cfg.get("request_timeout_seconds", 10))
 
 
-def build_reddit_source(config: dict, known_tickers: set[str]) -> RedditSource | None:
+def build_reddit_source(config: dict) -> ApeWisdomSource | None:
     cfg = config["discovery"]["reddit"]
     if not cfg.get("enabled", True):
         return None
-    if not os.environ.get("REDDIT_CLIENT_ID") or not os.environ.get("REDDIT_CLIENT_SECRET"):
-        logger.warning("Reddit discovery disabled: REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET not set")
-        return None
-    return RedditSource(
-        subreddits=cfg["subreddits"],
-        known_tickers=known_tickers,
-        posts_per_subreddit=cfg.get("posts_per_subreddit", 75),
-        mention_lookback_hours=cfg.get("mention_lookback_hours", 24),
+    return ApeWisdomSource(
+        filters=cfg["subreddits"],
+        timeout_seconds=cfg.get("request_timeout_seconds", 10),
     )
 
 
@@ -186,7 +181,7 @@ def cmd_live(args: argparse.Namespace, config: dict) -> None:
     logger.info("Loaded %d known tickers", len(known_tickers))
 
     stocktwits_source = build_stocktwits_source(config)
-    reddit_source = build_reddit_source(config, known_tickers)
+    reddit_source = build_reddit_source(config)
     yf_cache = YFinanceCache(ttl_seconds=config["polling"]["interval_seconds"])
     options_provider = YFinanceOptionsProvider(yf_cache, config["signals"]["options"])
     news_provider = build_news_provider(config, yf_cache)
