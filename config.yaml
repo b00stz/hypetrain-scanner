@@ -48,6 +48,8 @@ discovery:
       - "wallstreetbets"
       - "stocks"
       - "options"
+      - "pennystocks"
+      - "SqueezePlays"
     request_timeout_seconds: 10
 
   mentions:
