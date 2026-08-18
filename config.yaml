@@ -43,14 +43,25 @@ discovery:
   reddit:
     # Reddit mention counts come via ApeWisdom's free public API (apewisdom.io), not Reddit's
     # own Data API -- no credentials needed. See discovery/apewisdom.py for why.
+    # r/stocks and r/options dropped: mainstream-oriented, and their mention volume was crowding
+    # out genuine penny stocks in candidate ranking even with `price_filter` below providing the
+    # real gate -- no point tracking mention history for names price_filter excludes anyway.
     enabled: true
     subreddits: # ApeWisdom "filter" names -- must match their supported filter list
       - "wallstreetbets"
-      - "stocks"
-      - "options"
       - "pennystocks"
       - "SqueezePlays"
     request_timeout_seconds: 10
+
+  price_filter:
+    # The real "focus on penny stocks" gate: filters the known-ticker whitelist down to only
+    # tickers at or under max_price BEFORE any discovery source runs, using one batched yfinance
+    # price lookup at scanner startup (not per poll cycle -- see discovery/price_filter.py).
+    # Mention-ratio-based ranking alone lets megacaps (heavily discussed everywhere) win most
+    # candidate slots over genuine penny stocks; this removes them from consideration entirely
+    # rather than trying to out-rank them.
+    enabled: true
+    max_price: 10.0
 
   catalyst_news:
     # Scans a rotating slice of the known-ticker whitelist (data/tickers.csv) for fresh

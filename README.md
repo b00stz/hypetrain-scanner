@@ -21,7 +21,11 @@ happened afterward.
 ## Architecture
 
 ```
-discovery/      candidate discovery via two independent paths, merged into one list:
+discovery/      the known-ticker whitelist is first gated by discovery/price_filter.py (a
+                one-time batched price lookup at startup) down to tickers at or under
+                discovery.price_filter.max_price -- this is what makes the scanner actually
+                focus on penny stocks, since mention-ratio ranking alone lets megacaps win most
+                candidate slots. Candidates within that filtered universe come via two paths:
                   1. mention-driven: StockTwits trending + Reddit mentions (via ApeWisdom), each
                      with a mentions_now/mentions_baseline ratio
                   2. catalyst-news-driven: a rotating scan of the whitelist for fresh headlines
@@ -126,6 +130,15 @@ logging every candidate, not just alerts.
 
 ## Known limitations
 
+- **The price filter adds a startup delay** (~45s for ~540 tickers in testing) before the first
+  poll cycle runs, since it does one batched yfinance price lookup for the whole whitelist. It
+  runs once per `live` invocation, not per cycle. Disable it (`discovery.price_filter.enabled:
+  false`) if you'd rather have every discovery cycle start instantly and go back to mixing
+  penny/large-cap candidates.
+- **Price-filter lookups fail closed.** A ticker yfinance can't price this run (delisted, renamed,
+  transient batch-fetch flakiness -- confirmed happens even for real, actively-traded tickers
+  like EA and CYBR occasionally) is excluded from that run rather than assumed to pass the
+  filter. Restarting the scanner re-classifies with a fresh lookup.
 - **yfinance is unofficial** and has no SLA; Yahoo can and does rate-limit or block aggressive
   callers. The scanner only ever calls it for the current discovery shortlist (never the whole
   market) and caches responses for `polling.interval_seconds`, but if you shorten the interval

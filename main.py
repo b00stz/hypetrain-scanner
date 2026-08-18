@@ -202,6 +202,16 @@ def cmd_live(args: argparse.Namespace, config: dict) -> None:
     )
     logger.info("Loaded %d known tickers", len(known_tickers))
 
+    price_filter_cfg = config["discovery"].get("price_filter", {})
+    if price_filter_cfg.get("enabled", False):
+        from discovery.price_filter import filter_by_max_price
+
+        max_price = price_filter_cfg["max_price"]
+        logger.info("Applying price filter (<= $%.2f) -- one-time batch fetch, may take ~1min", max_price)
+        known_tickers = filter_by_max_price(known_tickers, max_price)
+        if not known_tickers:
+            logger.warning("Price filter left 0 tickers -- check max_price / whitelist coverage")
+
     stocktwits_source = build_stocktwits_source(config)
     reddit_source = build_reddit_source(config)
     yf_cache = YFinanceCache(ttl_seconds=config["polling"]["interval_seconds"])
