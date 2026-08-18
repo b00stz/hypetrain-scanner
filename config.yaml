@@ -52,6 +52,36 @@ discovery:
       - "SqueezePlays"
     request_timeout_seconds: 10
 
+  catalyst_news:
+    # Scans a rotating slice of the known-ticker whitelist (data/tickers.csv) for fresh
+    # headlines matching these keywords, independent of Reddit/StockTwits mention activity --
+    # see discovery/catalyst.py for why (and its hard limits: whitelist-only, batched to respect
+    # Finnhub's free-tier rate limit). A hit forces an alert regardless of the numeric hype
+    # score, since the point is to notify before social/price data have caught up at all.
+    enabled: true
+    lookback_hours: 16 # catches overnight/premarket headlines on top of the current session
+    batch_size: 40 # tickers scanned per poll cycle; full whitelist coverage takes multiple cycles
+    keywords:
+      - "contract"
+      - "awarded"
+      - "wins"
+      - "selected by"
+      - "partnership"
+      - "acquisition"
+      - "acquire"
+      - "merger"
+      - "buyout"
+      - "fda approval"
+      - "fda clears"
+      - "phase 3"
+      - "phase iii"
+      - "upgraded"
+      - "price target raised"
+      - "guidance raised"
+      - "beats estimates"
+      - "short squeeze"
+      - "halted"
+
   mentions:
     baseline_lookback_days: 7 # rolling window (excluding the current poll) used for "mentions_baseline"
     cold_start_baseline: 1.0 # baseline assumed when there's no history yet, avoids divide-by-zero spikes

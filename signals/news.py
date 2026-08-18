@@ -27,6 +27,12 @@ class NewsProvider(ABC):
     def example_link(self, ticker: str) -> Optional[str]:
         ...
 
+    @abstractmethod
+    def get_recent_headlines(self, ticker: str, hours: float) -> list[dict]:
+        """Return recent articles as-is (each with at least 'headline' and 'url'), for
+        keyword-based catalyst scanning -- see discovery/catalyst.py."""
+        ...
+
 
 class FinnhubNewsProvider(NewsProvider):
     BASE_URL = "https://finnhub.io/api/v1/company-news"
@@ -77,6 +83,13 @@ class FinnhubNewsProvider(NewsProvider):
         if not articles:
             return None
         return articles[0].get("url")
+
+    def get_recent_headlines(self, ticker: str, hours: float) -> list[dict]:
+        now = datetime.now(timezone.utc)
+        start = now - timedelta(hours=hours)
+        articles = self._fetch(ticker, start.date().isoformat(), now.date().isoformat())
+        cutoff_ts = start.timestamp()
+        return [a for a in articles if a.get("datetime", 0) >= cutoff_ts]
 
 
 @dataclass

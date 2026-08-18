@@ -1,9 +1,15 @@
-"""Merge StockTwits + Reddit (via ApeWisdom) mention sources into a single ranked candidate list.
+"""Merge StockTwits + Reddit (via ApeWisdom) mention sources, plus catalyst-news hits, into a
+single ranked candidate list.
 
-Each source's raw "count" is persisted to storage.mention_history on every poll, and compared
-against its own trailing rolling average to get a mentions_now/mentions_baseline ratio per
-source. The candidate's overall social_ratio is the max across sources (a spike on any one
+Each mention source's raw "count" is persisted to storage.mention_history on every poll, and
+compared against its own trailing rolling average to get a mentions_now/mentions_baseline ratio
+per source. The candidate's overall social_ratio is the max across sources (a spike on any one
 source is what we're hunting for).
+
+Catalyst-news hits (discovery/catalyst.py) are a separate, independent path: a ticker with a
+fresh material headline is always included in the returned list regardless of social_ratio or
+`limit`, since the entire point is to catch it before social buzz (and therefore social_ratio)
+exists at all.
 """
 from __future__ import annotations
 
@@ -13,6 +19,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from discovery.apewisdom import ApeWisdomSource
+from discovery.catalyst import CatalystHit
 from discovery.stocktwits import StockTwitsSource
 from storage import Storage
 
@@ -31,6 +38,8 @@ class Candidate:
     reddit_link: Optional[str] = None
     social_ratio: float = 0.0
     sources: list = field(default_factory=list)
+    catalyst_headline: Optional[str] = None
+    catalyst_url: Optional[str] = None
 
     @property
     def stocktwits_link(self) -> str:
@@ -45,6 +54,7 @@ def build_candidates(
     baseline_lookback_days: float,
     cold_start_baseline: float,
     limit: int,
+    catalyst_hits: Optional[list[CatalystHit]] = None,
 ) -> list[Candidate]:
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -88,4 +98,16 @@ def build_candidates(
         cand.social_ratio = max(ratios) if ratios else 0.0
 
     ranked = sorted(candidates.values(), key=lambda c: c.social_ratio, reverse=True)
-    return ranked[:limit]
+    result = ranked[:limit]
+
+    if catalyst_hits:
+        result_tickers = {c.ticker for c in result}
+        for hit in catalyst_hits:
+            cand = candidates.get(hit.ticker) or Candidate(ticker=hit.ticker)
+            cand.catalyst_headline = hit.headline
+            cand.catalyst_url = hit.url
+            if cand.ticker not in result_tickers:
+                result.append(cand)
+                result_tickers.add(cand.ticker)
+
+    return result

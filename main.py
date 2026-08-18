@@ -15,6 +15,7 @@ from alerting import AlertContext, AlertLinks, maybe_alert
 from configuration import load_config, setup_logging
 from discovery.apewisdom import ApeWisdomSource
 from discovery.candidates import Candidate, build_candidates
+from discovery.catalyst import scan_for_catalysts
 from discovery.stocktwits import StockTwitsSource
 from discovery.tickers import DEFAULT_TICKERS_CSV, load_known_tickers
 from scoring import compute_hype_score
@@ -57,11 +58,23 @@ def run_cycle(
     storage: Storage,
     known_tickers: set[str],
     stocktwits_source: StockTwitsSource | None,
-    reddit_source: RedditSource | None,
+    reddit_source: ApeWisdomSource | None,
     yf_cache: YFinanceCache,
     options_provider: OptionsProvider,
     news_provider: NewsProvider | None,
 ) -> None:
+    catalyst_cfg = config["discovery"].get("catalyst_news", {})
+    catalyst_hits = []
+    if news_provider is not None and catalyst_cfg.get("enabled", False):
+        catalyst_hits = scan_for_catalysts(
+            known_tickers=known_tickers,
+            news_provider=news_provider,
+            keywords=catalyst_cfg["keywords"],
+            lookback_hours=catalyst_cfg.get("lookback_hours", 16),
+            batch_size=catalyst_cfg.get("batch_size", 40),
+            interval_seconds=config["polling"]["interval_seconds"],
+        )
+
     candidates = build_candidates(
         storage=storage,
         known_tickers=known_tickers,
@@ -70,8 +83,12 @@ def run_cycle(
         baseline_lookback_days=config["discovery"]["mentions"]["baseline_lookback_days"],
         cold_start_baseline=config["discovery"]["mentions"]["cold_start_baseline"],
         limit=config["polling"]["candidate_limit"],
+        catalyst_hits=catalyst_hits,
     )
-    logger.info("Cycle: %d candidates from discovery", len(candidates))
+    logger.info(
+        "Cycle: %d candidates from discovery (%d via catalyst news)",
+        len(candidates), len(catalyst_hits),
+    )
 
     for cand in candidates:
         _evaluate_candidate(cand, config, storage, yf_cache, options_provider, news_provider)
@@ -107,6 +124,7 @@ def _evaluate_candidate(
         options_available=opt_signal.available,
         news_score=news_signal.score,
         config=config,
+        force_alert=cand.catalyst_headline is not None,
     )
 
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -136,11 +154,13 @@ def _evaluate_candidate(
             "stocktwits_ratio": cand.stocktwits_ratio,
             "reddit_ratio": cand.reddit_ratio,
             "sources": cand.sources,
+            "catalyst_headline": cand.catalyst_headline,
+            "catalyst_url": cand.catalyst_url,
         },
     )
     signal_id = storage.insert_signal(record)
     logger.info(
-        "%s: score=%.1f (social=%.1f pv=%.1f options=%s news=%.1f) crossed=%s",
+        "%s: score=%.1f (social=%.1f pv=%.1f options=%s news=%.1f) crossed=%s%s",
         cand.ticker,
         breakdown.total_score,
         breakdown.social_score,
@@ -148,6 +168,7 @@ def _evaluate_candidate(
         f"{breakdown.options_score:.1f}" if opt_signal.available else "n/a",
         breakdown.news_score,
         breakdown.crossed_threshold,
+        " [CATALYST]" if cand.catalyst_headline else "",
     )
 
     if breakdown.crossed_threshold:
@@ -155,10 +176,11 @@ def _evaluate_candidate(
             ticker=cand.ticker,
             breakdown=breakdown,
             price=pv_signal.price,
+            catalyst_headline=cand.catalyst_headline,
             links=AlertLinks(
                 stocktwits=cand.stocktwits_link if cand.stocktwits_ratio else None,
                 reddit=cand.reddit_link,
-                news=news_signal.link,
+                news=cand.catalyst_url or news_signal.link,
             ),
         )
         maybe_alert(

@@ -30,6 +30,7 @@ class AlertContext:
     breakdown: ScoreBreakdown
     price: Optional[float]
     links: AlertLinks = field(default_factory=AlertLinks)
+    catalyst_headline: Optional[str] = None
 
 
 def _build_message(ctx: AlertContext, paper_mode: bool) -> EmailMessage:
@@ -37,8 +38,19 @@ def _build_message(ctx: AlertContext, paper_mode: bool) -> EmailMessage:
     price_str = f"${ctx.price:.2f}" if ctx.price is not None else "n/a"
     options_str = f"{b.options_score:.1f}" if b.options_available else "n/a (no options data)"
 
-    lines = [
-        f"Hype score: {b.total_score:.1f} / 100 (threshold crossed)",
+    lines = []
+    if ctx.catalyst_headline:
+        lines += [
+            "*** CATALYST NEWS ALERT ***",
+            f"Headline: {ctx.catalyst_headline}",
+            "(This fired on the headline itself, not the numeric hype score below --",
+            " price/volume/social may not have caught up yet.)",
+            "",
+        ]
+
+    lines += [
+        f"Hype score: {b.total_score:.1f} / 100"
+        + (" (threshold crossed)" if not ctx.catalyst_headline else ""),
         f"Ticker: {ctx.ticker}",
         f"Current price: {price_str}",
         "",
@@ -69,8 +81,9 @@ def _build_message(ctx: AlertContext, paper_mode: bool) -> EmailMessage:
         ),
     ]
 
+    subject_tag = "catalyst news" if ctx.catalyst_headline else f"crossed threshold — score {b.total_score:.0f}"
     msg = EmailMessage()
-    msg["Subject"] = f"[hypetrain-scanner] {ctx.ticker} crossed threshold — score {b.total_score:.0f}"
+    msg["Subject"] = f"[hypetrain-scanner] {ctx.ticker} — {subject_tag}"
     msg["From"] = os.environ["ALERT_EMAIL_FROM"]
     msg["To"] = os.environ["ALERT_EMAIL_TO"]
     msg.set_content("\n".join(lines))

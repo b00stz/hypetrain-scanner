@@ -21,12 +21,18 @@ happened afterward.
 ## Architecture
 
 ```
-discovery/      candidate discovery: StockTwits trending + Reddit mention counts (via ApeWisdom), merged into a
-                ranked list of tickers with a mentions_now/mentions_baseline ratio per source
+discovery/      candidate discovery via two independent paths, merged into one list:
+                  1. mention-driven: StockTwits trending + Reddit mentions (via ApeWisdom), each
+                     with a mentions_now/mentions_baseline ratio
+                  2. catalyst-news-driven: a rotating scan of the whitelist for fresh headlines
+                     matching config.yaml keywords (contract wins, FDA approvals, etc.) --
+                     catches material news before social buzz exists, see discovery/catalyst.py
 signals/        confirmation signals for the discovery shortlist only, never the whole market:
                 price/volume/volatility (yfinance), options (yfinance, pluggable), news (Finnhub, pluggable)
-scoring.py      combines the four signal types into one 0-100 score using config.yaml weights
-alerting.py     emails an alert (smtplib) when score crosses threshold, deduped by cooldown window
+scoring.py      combines the four signal types into one 0-100 score using config.yaml weights;
+                a catalyst-news hit forces an alert regardless of the numeric score
+alerting.py     emails an alert (smtplib) when score crosses threshold OR a catalyst news hit
+                fires, deduped by cooldown window
 storage.py      SQLite: every evaluated candidate (not just alerts), plus mention history + backtest results
 backtest.py     pulls forward returns for logged signals and reports hit rate / avg return by signal type
 main.py         CLI: `live` (polling loop) and `backtest`
@@ -136,6 +142,24 @@ logging every candidate, not just alerts.
   same caveat as StockTwits above. If it ever stops working, `discovery/apewisdom.py` is the only
   file that needs to change; `discovery/candidates.py` just expects a `get_mention_counts()` call
   returning `(counts, links)`, so any replacement source can drop in the same way.
+- **Catalyst-news discovery only ever sees tickers already in `data/tickers.csv`.** A ticker that
+  has never been added to the whitelist is completely invisible to this scanner, no matter how
+  big its news catalyst is — there is no free-tier API offering a broad "any ticker, any
+  headline" firehose with ticker-tagging; that's specifically what paid news terminals sell.
+  Catching a move like Xos's overnight Air Force contract announcement (before it shows up on a
+  "top movers" page) only works if `XOS` was already on the whitelist beforehand. Keep adding
+  small/micro-cap tickers you care about to `data/tickers.csv` — there's no automatic way around
+  this ceiling.
+- **Catalyst scanning is rate-limit-bounded, not real-time across the whole whitelist.** It scans
+  a rotating batch (`discovery.catalyst_news.batch_size` in config.yaml, default 40) of the
+  whitelist each poll cycle to stay within Finnhub's free-tier 60-calls/minute limit — full
+  whitelist coverage takes several cycles, not one. A larger whitelist means longer average time
+  to detect a catalyst on any given ticker; there's a real tradeoff between whitelist breadth and
+  detection latency.
+- **Keyword matching is a blunt instrument.** `discovery.catalyst_news.keywords` matches plain
+  substrings against headline text (e.g. "contract", "fda approval") — it will miss differently
+  worded catalysts and can false-positive on unrelated headlines that happen to contain a keyword.
+  Tune the list in config.yaml as you see what does and doesn't fire.
 
 ## Tests
 

@@ -32,7 +32,11 @@ def compute_hype_score(
     options_available: bool,
     news_score: float,
     config: dict,
+    force_alert: bool = False,
 ) -> ScoreBreakdown:
+    """`force_alert` bypasses the numeric threshold entirely -- used for catalyst-news hits
+    (discovery/catalyst.py), where the point is to alert on a fresh material headline before
+    price/volume/social have necessarily caught up enough to cross the threshold on their own."""
     social_full_score_ratio = config["discovery"]["mentions"]["ratio_full_score"]
     social_score = _scale(social_ratio, social_full_score_ratio)
 
@@ -63,7 +67,7 @@ def compute_hype_score(
     )
 
     threshold = config["scoring"]["alert_threshold"]
-    crossed_threshold = total_score >= threshold
+    crossed_threshold = total_score >= threshold or force_alert
 
     return ScoreBreakdown(
         social_score=social_score,
