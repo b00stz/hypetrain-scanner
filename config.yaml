@@ -8,7 +8,7 @@ database:
   path: "data/hypetrain.db"
 
 polling:
-  interval_seconds: 300 # how often the main loop runs a full discovery+scoring cycle
+  interval_seconds: 120 # how often the main loop runs a full discovery+scoring cycle
   candidate_limit: 25 # max number of merged candidates to run confirmation signals against per cycle
 
 discovery:
