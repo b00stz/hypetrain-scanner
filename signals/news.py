@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -37,16 +38,37 @@ class NewsProvider(ABC):
 class FinnhubNewsProvider(NewsProvider):
     BASE_URL = "https://finnhub.io/api/v1/company-news"
 
-    def __init__(self, api_key: str, cache: YFinanceCache, timeout_seconds: float = 10.0):
+    def __init__(
+        self,
+        api_key: str,
+        cache: YFinanceCache,
+        timeout_seconds: float = 10.0,
+        min_interval_seconds: float = 1.1,
+    ):
         self.api_key = api_key
         self.cache = cache
         self.timeout_seconds = timeout_seconds
+        # Finnhub's free tier is 60 calls/minute. Catalyst scanning (a batch of the whitelist
+        # each cycle) plus per-candidate news confirmation can add up to ~65 calls in a single
+        # cycle -- without pacing, that blew through the limit and returned 429s, which were
+        # then silently treated as "no news" (risking a missed catalyst on exactly the cycle it
+        # mattered). Throttle actual network calls the same way yfinance calls already are;
+        # cache hits (self.cache.get) skip this entirely since fetch() only runs on a miss.
+        self.min_interval_seconds = min_interval_seconds
+        self._last_call_monotonic = 0.0
         self._last_articles: dict[str, list[dict]] = {}
+
+    def _throttle(self) -> None:
+        elapsed = time.monotonic() - self._last_call_monotonic
+        if elapsed < self.min_interval_seconds:
+            time.sleep(self.min_interval_seconds - elapsed)
+        self._last_call_monotonic = time.monotonic()
 
     def _fetch(self, ticker: str, from_date: str, to_date: str) -> list[dict]:
         key = ("finnhub_news", ticker, from_date, to_date)
 
         def fetch():
+            self._throttle()
             resp = requests.get(
                 self.BASE_URL,
                 params={"symbol": ticker, "from": from_date, "to": to_date, "token": self.api_key},
@@ -58,7 +80,7 @@ class FinnhubNewsProvider(NewsProvider):
         try:
             articles = self.cache.get(key, fetch)
         except Exception:
-            logger.exception("Finnhub news fetch failed for %s", ticker)
+            logger.warning("Finnhub news fetch failed for %s (rate-limited or unavailable)", ticker)
             articles = []
         self._last_articles[ticker] = articles
         return articles

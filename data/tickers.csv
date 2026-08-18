@@ -7,7 +7,7 @@ AMZN,Amazon.com Inc
 NVDA,NVIDIA Corp
 META,Meta Platforms Inc
 TSLA,Tesla Inc
-BRK.B,Berkshire Hathaway Class B
+BRK-B,Berkshire Hathaway Class B
 AVGO,Broadcom Inc
 LLY,Eli Lilly
 JPM,JPMorgan Chase
@@ -117,7 +117,6 @@ ORLY,O'Reilly Automotive
 AON,Aon PLC
 MAR,Marriott International
 ROP,Roper Technologies
-PXD,Pioneer Natural Resources
 APH,Amphenol Corp
 FDX,FedEx Corp
 TT,Trane Technologies
@@ -146,7 +145,6 @@ AIG,American International Group
 WMB,Williams Companies
 COF,Capital One Financial
 TDG,TransDigm Group
-HES,Hess Corp
 JCI,Johnson Controls
 ROST,Ross Stores
 SPG,Simon Property Group
@@ -172,7 +170,6 @@ DASH,DoorDash Inc
 SNAP,Snap Inc
 PINS,Pinterest Inc
 SPOT,Spotify Technology
-SQ,Block Inc
 PYPL,PayPal Holdings
 SHOP,Shopify Inc
 ROKU,Roku Inc
@@ -195,11 +192,9 @@ RIVN,Rivian Automotive
 NIO,NIO Inc
 XPEV,XPeng Inc
 LI,Li Auto Inc
-FSR,Fisker Inc
 GME,GameStop Corp
 AMC,AMC Entertainment Holdings
 BB,BlackBerry Ltd
-BBBY,Bed Bath & Beyond Inc
 NOK,Nokia Corp
 WISH,ContextLogic Inc
 CLOV,Clover Health Investments
@@ -216,7 +211,6 @@ CVNA,Carvana Co
 BYND,Beyond Meat Inc
 PLUG,Plug Power Inc
 FCEL,FuelCell Energy Inc
-NKLA,Nikola Corp
 CHPT,ChargePoint Holdings
 QS,QuantumScape Corp
 SPWR,SunPower Corp
@@ -250,7 +244,6 @@ EBAY,eBay Inc
 W,Wayfair Inc
 CHWY,Chewy Inc
 CVS,CVS Health Corp
-WBA,Walgreens Boots Alliance
 KR,Kroger Co
 DG,Dollar General Corp
 DLTR,Dollar Tree Inc
@@ -296,7 +289,6 @@ NWSA,News Corp Class A
 LYV,Live Nation Entertainment
 EA,Electronic Arts
 TTWO,Take-Two Interactive
-ATVI,Activision Blizzard
 RBLX,Roblox Corp
 JNJ,Johnson & Johnson
 PFE,Pfizer Inc
@@ -330,7 +322,6 @@ UMC,United Microelectronics Corp
 STM,STMicroelectronics NV
 WOLF,Wolfspeed Inc
 GFS,GlobalFoundries Inc
-XLNX,Xilinx Inc
 TXN,Texas Instruments
 MCHP,Microchip Technology
 FTNT,Fortinet Inc
