@@ -89,10 +89,15 @@ discovery:
 
 signals:
   price_volume:
+    # Thresholds calibrated for penny-stock-scale volatility, not large-cap moves -- an 8% daily
+    # move is a big deal for AAPL but routine noise for a sub-$5 name, and would max this
+    # sub-score out constantly without discriminating a real spike from normal churn. This
+    # tradeoff cuts the other way for large caps: a genuinely large blue-chip move will now score
+    # lower here than it used to. Tune back down if you want large-cap precision back.
     lookback_days: 20 # window for the average-volume baseline
-    volume_ratio_full_score: 5.0 # volume/avg_volume_20d ratio that maps to a 100 sub-score
-    price_change_pct_full_score: 8.0 # abs(% change) that maps to a 100 sub-score
-    intraday_volatility_full_score_pct: 6.0 # (day_high-day_low)/day_low % that maps to a 100 sub-score
+    volume_ratio_full_score: 8.0 # volume/avg_volume_20d ratio that maps to a 100 sub-score
+    price_change_pct_full_score: 40.0 # abs(% change) that maps to a 100 sub-score
+    intraday_volatility_full_score_pct: 30.0 # (day_high-day_low)/day_low % that maps to a 100 sub-score
     weights: # how the three components combine into the single 0-100 price_volume signal
       volume: 0.45
       price_change: 0.35
