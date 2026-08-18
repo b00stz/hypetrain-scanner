@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass
 from typing import Optional
 
@@ -10,6 +11,15 @@ import yfinance as yf
 from signals.yf_cache import YFinanceCache
 
 logger = logging.getLogger(__name__)
+
+
+def _is_missing(value) -> bool:
+    if value is None:
+        return True
+    try:
+        return math.isnan(float(value))
+    except (TypeError, ValueError):
+        return True
 
 
 @dataclass
@@ -50,20 +60,45 @@ def get_price_volume_signal(
     today = hist.iloc[-1]
     prev = hist.iloc[-2]
 
-    if prev["Close"] in (0, None) or today["Low"] in (0, None):
+    if _is_missing(prev["Close"]):
         return None
 
-    price = float(today["Close"])
-    price_change_pct = (float(today["Close"]) - float(prev["Close"])) / float(prev["Close"]) * 100.0
-    volume = float(today["Volume"])
+    # yfinance's daily history can carry an incomplete last row -- Volume already populated but
+    # OHLC still NaN, seen while Yahoo hasn't finished settling the current session's close yet.
+    # Silently letting NaN flow through here previously produced a plausible-looking but garbage
+    # score (NaN propagates through the _scale() min/max calls without raising). Fall back to a
+    # live quote (fast_info) for today's price/high/low in that case; Volume from history is
+    # still valid either way, confirmed in testing.
+    today_incomplete = _is_missing(today["Close"]) or _is_missing(today["Low"])
+
+    if today_incomplete:
+        try:
+            fast_info = cache.get(("fast_info", ticker), lambda: yf.Ticker(ticker).fast_info)
+            today_close = float(fast_info["lastPrice"])
+            today_high = float(fast_info["dayHigh"])
+            today_low = float(fast_info["dayLow"])
+        except Exception:
+            logger.warning("%s: history's last bar is incomplete and fast_info fallback failed", ticker)
+            return None
+        if _is_missing(today_close) or _is_missing(today_low):
+            return None
+    else:
+        today_close = float(today["Close"])
+        today_high = float(today["High"])
+        today_low = float(today["Low"])
+
+    if _is_missing(today["Volume"]):
+        return None
+
+    price = today_close
+    price_change_pct = (today_close - float(prev["Close"])) / float(prev["Close"]) * 100.0
+    volume = float(today["Volume"])  # Volume is populated even when OHLC is incomplete
 
     baseline_window = hist["Volume"].iloc[:-1].tail(lookback_days)
     avg_volume = float(baseline_window.mean()) if len(baseline_window) else 0.0
     volume_ratio = (volume / avg_volume) if avg_volume > 0 else 0.0
 
-    intraday_volatility_pct = (
-        (float(today["High"]) - float(today["Low"])) / float(today["Low"]) * 100.0
-    )
+    intraday_volatility_pct = (today_high - today_low) / today_low * 100.0
 
     weights = cfg["weights"]
     volume_component = _scale(volume_ratio, cfg["volume_ratio_full_score"])
